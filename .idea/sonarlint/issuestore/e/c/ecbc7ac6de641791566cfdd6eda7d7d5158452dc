@@ -1,0 +1,8 @@
+
+Esquid:S1068"'Remove this unused "LOG" private field.(ûš¯³8ƒÊ¯­õ,
+Psquid:S11350"2Complete the task associated to this TODO comment.(…ïœ†8Õê©­õ,
+Isquid:S2160"+Override the "equals" method in this class.(¹´‚İ8’³¢­õ,
+_squid:UselessImportCheck"4Remove this unused import 'java.util.logging.Level'.(…µÛ¶8ƒÊ¯­õ,
+Usquid:S1135""2Complete the task associated to this TODO comment.(“ÿ“Ìøÿÿÿÿ8£„ÛË÷,
+squid:S4165;"cRemove this useless assignment; "value" already holds the assigned value along all execution paths.(œË÷Ä8Õê©­õ,
+Psquid:S1135:"2Complete the task associated to this TODO comment.(…ïœ†8Õê©­õ,

@@ -1,0 +1,7 @@
+
+Vsquid:S1854"8Remove this useless assignment to local variable "site".(ÃçåÊ8ì™³­õ,
+Msquid:S1068"0Remove this unused "valueManager" private field.(æ¬ß)8è‚·­õ,
+Gsquid:S1481")Remove this unused "site" local variable.(ÃçåÊ8ì™³­õ,
+°%squid:RedundantThrowsDeclarationCheck"sRemove the declaration of thrown exception 'java.rmi.NotBoundException', as it cannot be thrown from method's body.(†ß¥şÿÿÿÿÿ8ì™³­õ,
+Usquid:S1135"2Complete the task associated to this TODO comment.(»ãªÁüÿÿÿÿ8×´­õ,
+®%squid:RedundantThrowsDeclarationCheck"qRemove the declaration of thrown exception 'java.rmi.RemoteException', as it cannot be thrown from method's body.(†ß¥şÿÿÿÿÿ8ì™³­õ,

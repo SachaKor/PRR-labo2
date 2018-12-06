@@ -11,13 +11,27 @@ public class Site {
     private IValueManager valueManager;
     public static void main(String ...args) throws RemoteException, NotBoundException {
         Site site = new Site();
-        // TODO: scenario
+    }
+
+    public void printValue() throws RemoteException {
+        int value = valueManager.getValue();
+        System.out.println(value);
+
+    }
+
+    public void setValue(int value) throws RemoteException {
+        valueManager.setValue(value);
     }
 
     public Site() {
+//        if(System.getSecurityManager() == null) {
+//            System.setSecurityManager(new SecurityManager());
+//        }
         try {
             Registry registry = LocateRegistry.getRegistry("localhost");
-            valueManager = (IValueManager)registry.lookup("valueManager");
+            valueManager = (IValueManager)registry.lookup("ValueManager");
+            setValue(2);
+            printValue();
         } catch (RemoteException | NotBoundException e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
         }
