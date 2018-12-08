@@ -3,6 +3,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -16,24 +17,38 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
 
     private int value;
 
+    private static String valueManagerName;
+
     /**
      * Default constructor
      * @throws RemoteException
      */
-    public ValueManager() throws RemoteException {
+    public ValueManager(String ...args) throws RemoteException {
         super();
     }
 
+    /**
+     * args[0] - the port on which the registry accepts the requests
+     * args[1] - the name of the remote object
+     * @param args
+     * @throws RemoteException
+     * @throws AlreadyBoundException
+     */
     public static void main(String ...args) throws RemoteException, AlreadyBoundException {
         // create and install the security manager
 //        if(System.getSecurityManager() == null) {
 //            System.setSecurityManager(new SecurityManager());
 //        }
-        // create and exports a Registry instance on the localhost that accepts requests on the port 1099
-        // TODO: custom port
-        Registry registry = LocateRegistry.createRegistry(1099);
+        // create and exports a Registry instance on the localhost that accepts requests
+        int port = Integer.parseInt(args[0]);
+        int id = Integer.parseInt(args[1]);
+        valueManagerName = Constants.REMOTE_OBJ_NAME + id;
+        Registry registry = LocateRegistry.createRegistry(port);
         // bind the remote reference to the name in the registry
-        registry.bind("ValueManager", new ValueManager());
+        registry.bind(valueManagerName, new ValueManager());
+        LOG.log(Level.INFO, () -> valueManagerName + " bound");
+        LOG.log(Level.INFO, () -> "Listening on incoming remote invocations on port: " + port);
+
     }
 
     /**
