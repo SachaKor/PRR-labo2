@@ -68,7 +68,7 @@ public class Site {
 //        }
         try {
             Registry registry = LocateRegistry.getRegistry(Constants.SERVER_HOST);
-            valueManager = (IValueManager) Naming.lookup("rmi://localhost:/" + port + "/" + valueManagerName);
+            valueManager = (IValueManager) Naming.lookup("rmi://localhost:" + port + "/" + valueManagerName);
             LOG.log(Level.INFO, () -> valueManagerName + " is found");
             setValue();
             printValue();
