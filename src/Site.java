@@ -12,7 +12,6 @@ public class Site {
     private static final Logger LOG = Logger.getLogger(Site.class.getName());
 
     private IValueManager valueManager;
-    private static String valueManagerName;
 
     /**
      * args[0] - {@link ValueManager}'s id
@@ -22,10 +21,7 @@ public class Site {
      */
     public static void main(String ...args) throws RemoteException, NotBoundException {
         int port = Integer.parseInt(args[0]);
-        int id = Integer.parseInt(args[1]);
-        valueManagerName = Constants.REMOTE_OBJ_NAME +  id;
-        System.out.println(valueManagerName);
-        Site site = new Site(id, port);
+        Site site = new Site(port);
     }
 
     public void printValue() throws RemoteException {
@@ -50,28 +46,62 @@ public class Site {
         valueManager.setValue(value);
     }
 
-    public void askUserForCommands() {
-        while (true) {
+    public void askUserForCommands() throws RemoteException {
+        System.out.println("NOTE: After all servers are launched, be sure you have linked " +
+                "the servers between them to insure the system to be executed properly");
+        boolean run = true;
+        while (run) {
             System.out.println("Enter the command you would like to execute: \n" +
+                    "- tap \"l\" to link the nodes of the system between them\n" +
                     "- tap \"p\" to print the current value\n" +
                     "- tap \"w\" followed by an integer to set the new value\n" +
                     "- tap \"q\" to quit the program");
             Scanner scanner = new Scanner(System.in);
             String command = scanner.next();
-            break;
+            switch (Character.toUpperCase(command.charAt(0))) {
+                case Constants.PRINT: {
+                    int value = valueManager.getValue();
+                    System.out.println(value);
+                    break;
+                }
+                case Constants.WRITE: {
+                    String valueStr = scanner.next();
+                    try {
+                        int value = Integer.parseInt(valueStr);
+                        valueManager.setValue(value);
+                    } catch (Exception e) {
+                        System.out.println(valueStr);
+                        System.out.println(Constants.UNKNOWN_COMMAND);
+                    }
+                    break;
+                }
+                case Constants.LOOKUP: {
+                    try {
+                        valueManager.lookup();
+                    } catch (NotBoundException | MalformedURLException e) {
+                        LOG.log(Level.SEVERE, e.getMessage(), e);
+                    }
+                    break;
+                }
+                case Constants.QUIT: {
+                    run = false;
+                    break;
+                }
+                default:
+                    System.out.println(Constants.UNKNOWN_COMMAND);
+            }
         }
     }
 
-    public Site(int id, int port) {
+    public Site(int port) {
 //        if(System.getSecurityManager() == null) {
 //            System.setSecurityManager(new SecurityManager());
 //        }
         try {
             Registry registry = LocateRegistry.getRegistry(Constants.SERVER_HOST);
-            valueManager = (IValueManager) Naming.lookup("rmi://localhost:" + port + "/" + valueManagerName);
-            LOG.log(Level.INFO, () -> valueManagerName + " is found");
-            setValue();
-            printValue();
+            valueManager = (IValueManager) Naming.lookup("rmi://" + Constants.SERVER_HOST + ":" +
+                    port + "/" + Constants.REMOTE_OBJ_NAME);
+            LOG.log(Level.INFO, () -> Constants.REMOTE_OBJ_NAME + " is found on port " + port);
             askUserForCommands();
         } catch (RemoteException | NotBoundException | MalformedURLException e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
