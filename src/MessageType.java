@@ -1,5 +1,5 @@
 public enum MessageType {
     REQUEST,
-    ACKNOLEGMENT,
+    ACKNOWLEDGEMENT,
     LIBERATION
 }

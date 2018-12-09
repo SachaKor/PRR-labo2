@@ -51,40 +51,84 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
      */
     private List<IValueManager> nodes;
 
-    private Map<Integer, Request> pendingRequests;
+    private Map<Integer, Message> pendingRequests;
 
     private int nbAcks;
+
+    private boolean criticalSectionRequested;
+
+    private int newValue;
 
     private void updateLocalTime(int remoteTimestapm) {
         localTime =  Math.max(localTime+1, remoteTimestapm+1);
     }
 
+    public void updateValue(int newValue) throws RemoteException {
+        this.value = newValue;
+    }
+
     public void acceptMessage(Message message) throws RemoteException {
-        LOG.log(Level.INFO, () -> "message received");
+        LOG.log(Level.INFO, () -> "[" + localTime + "] " + "message received");
         updateLocalTime(message.getTimestamp());
+        LOG.log(Level.INFO, "[" + localTime + "] "
+                + message.getMessageType().name()
+                + " from " + message.getEmitterPort());
         switch (message.getMessageType()) {
-            case ACKNOLEGMENT:
+            case REQUEST:
+                pendingRequests.put(message.getEmitterPort(), message);
+                portManager.get(message.getEmitterPort()).acceptMessage(
+                        new Message(localTime, MessageType.ACKNOWLEDGEMENT, port));
+                break;
+            case ACKNOWLEDGEMENT:
+                nbAcks++;
+                checkCriticalSection();
                 break;
             case LIBERATION:
+                pendingRequests.remove(message.getEmitterPort());
+                checkCriticalSection();
                 break;
             default:
+                LOG.log(Level.SEVERE, "Unknown message type");
         }
     }
 
-    public void acceptRequestMessage(RequestMessage message) throws RemoteException {
-        pendingRequests.add(new Request(message.getTimestamp(), message.getNewValue(), port));
+    private void checkCriticalSection() throws RemoteException {
+        if(criticalSectionRequested && nbAcks == nbNodes-1) {
+            // check if the local request is the oldest one
+            int localRequestTime = pendingRequests.get(port).getTimestamp();
+            for (Map.Entry<Integer, Message> entry : pendingRequests.entrySet()) {
+                if (localRequestTime > entry.getValue().getTimestamp()) {
+                    return;
+                }
+            }
+            // the local request is the oldest one
+            LOG.log(Level.INFO, "Entering in the critical section");
+            this.value = newValue;
+            pendingRequests.remove(port);
+            criticalSectionRequested = false;
+            nbAcks = 0;
+            // inform other nodes of the system
+            LOG.log(Level.INFO, "Updating value in other nodes");
+            for (IValueManager vm : nodes) {
+                vm.acceptMessage(new Message(localTime, MessageType.LIBERATION, port));
+                vm.updateValue(newValue);
+            }
+            LOG.log(Level.INFO, "Value updated, new value: " + value);
+        }
     }
 
     public void sendRequest(int newValue) throws RemoteException {
         localTime++;
         nbAcks = 0;
-        RequestMessage requestMsg = new RequestMessage(localTime, port, newValue);
-        pendingRequests.add(new Request(localTime, newValue, port));
+        criticalSectionRequested = true;
+        this.newValue = newValue;
+        Message requestMsg = new Message(localTime, MessageType.REQUEST, port);
+        pendingRequests.put(port, requestMsg);
 
         for (IValueManager vm : nodes) {
-            vm.acceptRequestMessage(requestMsg);
+            vm.acceptMessage(requestMsg);
         }
-        LOG.log(Level.INFO, () -> "The set value request is sent to other nodes, value = " + newValue);
+        LOG.log(Level.INFO, () -> "The set value request is sent to other nodes");
     }
 
     /**
@@ -97,9 +141,10 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
         this.port = port;
         this.nbNodes = nbNodes;
         this.ports = ports;
-        pendingRequests = new TreeMap<>(nbNodes);
+        pendingRequests = new TreeMap<>();
         nodes = new ArrayList<>(nbNodes);
         portManager = new HashMap<>();
+        criticalSectionRequested = false;
     }
 
     public void lookup() throws RemoteException, NotBoundException, MalformedURLException {
@@ -108,9 +153,9 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
             String toLookup = "rmi://" + Constants.SERVER_HOST
                     + ":" + p + "/" + Constants.REMOTE_OBJ_NAME;
             Registry registry = LocateRegistry.getRegistry(Constants.SERVER_HOST);
-            IValueManager manager = (IValueManager) Naming.lookup(toLookup)
+            IValueManager manager = (IValueManager) Naming.lookup(toLookup);
             nodes.add(manager);
-            portManager.put(port, manager);
+            portManager.put(p, manager);
             LOG.log(Level.INFO, () -> Constants.REMOTE_OBJ_NAME + " is linked with other nodes of the system");
         }
     }
@@ -153,7 +198,6 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
      */
     @Override
     public int getValue() throws RemoteException {
-        // TODO
         return value;
     }
 
@@ -163,7 +207,6 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
      */
     @Override
     public void setValue(int value) throws RemoteException {
-        // TODO
         sendRequest(value);
         this.value = value;
     }

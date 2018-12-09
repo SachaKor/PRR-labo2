@@ -9,5 +9,5 @@ public interface IValueManager extends Remote {
     void lookup() throws RemoteException, NotBoundException, MalformedURLException;
     void sendRequest(int newValue) throws RemoteException;
     void acceptMessage(Message message) throws RemoteException;
-    void acceptRequestMessage(RequestMessage message) throws RemoteException;
+    void updateValue(int newValue) throws RemoteException;
 }

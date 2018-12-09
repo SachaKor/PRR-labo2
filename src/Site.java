@@ -47,15 +47,19 @@ public class Site {
     }
 
     public void askUserForCommands() throws RemoteException {
-        System.out.println("NOTE: After all servers are launched, be sure you have linked " +
-                "the servers between them to insure the system to be executed properly");
         boolean run = true;
+        boolean serversLinked = false;
         while (run) {
             System.out.println("Enter the command you would like to execute: \n" +
                     "- tap \"l\" to link the nodes of the system between them\n" +
                     "- tap \"p\" to print the current value\n" +
                     "- tap \"w\" followed by an integer to set the new value\n" +
                     "- tap \"q\" to quit the program");
+            if(!serversLinked) {
+                System.out.println("NOTE: After all servers are launched, be sure you have linked " +
+                        "the servers between them to insure the system to be executed properly\n" +
+                        "use \"l\" command");
+            }
             Scanner scanner = new Scanner(System.in);
             String command = scanner.next();
             switch (Character.toUpperCase(command.charAt(0))) {
@@ -69,7 +73,7 @@ public class Site {
                     try {
                         int value = Integer.parseInt(valueStr);
                         valueManager.setValue(value);
-                    } catch (Exception e) {
+                    } catch (NumberFormatException e) {
                         System.out.println(valueStr);
                         System.out.println(Constants.UNKNOWN_COMMAND);
                     }
@@ -81,6 +85,7 @@ public class Site {
                     } catch (NotBoundException | MalformedURLException e) {
                         LOG.log(Level.SEVERE, e.getMessage(), e);
                     }
+                    serversLinked = true;
                     break;
                 }
                 case Constants.QUIT: {
