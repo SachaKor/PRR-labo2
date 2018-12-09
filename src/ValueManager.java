@@ -6,9 +6,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,26 +44,47 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
      */
     private int[] ports;
 
+    private Map<Integer, IValueManager> portManager;
+
     /**
      * Remote {@link ValueManager}s
      */
     private List<IValueManager> nodes;
 
-    /**
-     * This {@link PriorityQueue} stores all the pending requests in the increasing order of the timestamps
-     * Used by the system to execute the requests in the order they are created (Lamport algorithm)
-     */
-    private PriorityQueue<Request> pendingRequests;
+    private Map<Integer, Request> pendingRequests;
 
+    private int nbAcks;
 
-    public void acceptMessage(Message message) {
-        // TODO
+    private void updateLocalTime(int remoteTimestapm) {
+        localTime =  Math.max(localTime+1, remoteTimestapm+1);
     }
 
-    public void sendRequest(int newValue) {
+    public void acceptMessage(Message message) throws RemoteException {
+        LOG.log(Level.INFO, () -> "message received");
+        updateLocalTime(message.getTimestamp());
+        switch (message.getMessageType()) {
+            case ACKNOLEGMENT:
+                break;
+            case LIBERATION:
+                break;
+            default:
+        }
+    }
+
+    public void acceptRequestMessage(RequestMessage message) throws RemoteException {
+        pendingRequests.add(new Request(message.getTimestamp(), message.getNewValue(), port));
+    }
+
+    public void sendRequest(int newValue) throws RemoteException {
         localTime++;
-        Message request = new Message(localTime, MessageType.REQUEST, port, newValue);
-        // TODO: send requests to other nodes
+        nbAcks = 0;
+        RequestMessage requestMsg = new RequestMessage(localTime, port, newValue);
+        pendingRequests.add(new Request(localTime, newValue, port));
+
+        for (IValueManager vm : nodes) {
+            vm.acceptRequestMessage(requestMsg);
+        }
+        LOG.log(Level.INFO, () -> "The set value request is sent to other nodes, value = " + newValue);
     }
 
     /**
@@ -78,8 +97,9 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
         this.port = port;
         this.nbNodes = nbNodes;
         this.ports = ports;
-        pendingRequests = new PriorityQueue<>(nbNodes, (r1, r2) -> (r1.getTimestamp() - r2.getTimestamp()));
+        pendingRequests = new TreeMap<>(nbNodes);
         nodes = new ArrayList<>(nbNodes);
+        portManager = new HashMap<>();
     }
 
     public void lookup() throws RemoteException, NotBoundException, MalformedURLException {
@@ -88,8 +108,10 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
             String toLookup = "rmi://" + Constants.SERVER_HOST
                     + ":" + p + "/" + Constants.REMOTE_OBJ_NAME;
             Registry registry = LocateRegistry.getRegistry(Constants.SERVER_HOST);
-            nodes.add((IValueManager) Naming.lookup(toLookup));
-
+            IValueManager manager = (IValueManager) Naming.lookup(toLookup)
+            nodes.add(manager);
+            portManager.put(port, manager);
+            LOG.log(Level.INFO, () -> Constants.REMOTE_OBJ_NAME + " is linked with other nodes of the system");
         }
     }
 
@@ -142,6 +164,7 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
     @Override
     public void setValue(int value) throws RemoteException {
         // TODO
+        sendRequest(value);
         this.value = value;
     }
 }

@@ -1,15 +1,15 @@
-public class Message {
+import java.io.Serializable;
+
+public class Message implements Serializable {
 
     private int timestamp;
     private MessageType messageType;
     private int emitterPort;
-    private int newValue;
 
-    public Message(int timestamp, MessageType messageType, int emitterPort, int newValue) {
+    public Message(int timestamp, MessageType messageType, int emitterPort) {
         this.timestamp = timestamp;
         this.messageType = messageType;
         this.emitterPort = emitterPort;
-        this.newValue = newValue;
     }
 
     public int getTimestamp() {
@@ -22,9 +22,5 @@ public class Message {
 
     public int getEmitterPort() {
         return emitterPort;
-    }
-
-    public int getNewValue() {
-        return newValue;
     }
 }
