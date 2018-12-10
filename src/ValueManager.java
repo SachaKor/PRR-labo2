@@ -70,7 +70,7 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
     public void acceptMessage(Message message) throws RemoteException {
         LOG.log(Level.INFO, () -> "[" + localTime + "] " + "message received");
         updateLocalTime(message.getTimestamp());
-        LOG.log(Level.INFO, "[" + localTime + "] "
+        LOG.log(Level.INFO, () -> "[" + localTime + "] "
                 + message.getMessageType().name()
                 + " from " + message.getEmitterPort());
         switch (message.getMessageType()) {

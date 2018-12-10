@@ -1,9 +1,10 @@
+/**
+ * This class contains useful constants
+ *
+ * Authors: Samuel Mayor, Alexandra Korukova
+ */
 public class Constants {
-    /**
-     * The base name of the remote object
-     * Each Value Manager remote object's name will be: ValueManagerX, where X is the id of the remote object
-     * passed as a main program argument to the {@link Site} and {@link ValueManager}
-     */
+    // the name of the remote objects
     public static final String REMOTE_OBJ_NAME = "ValueManager";
     // host
     public static final String SERVER_HOST = "localhost";

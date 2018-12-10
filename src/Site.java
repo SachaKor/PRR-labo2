@@ -8,14 +8,21 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+/**
+ * This class represents the client side of the application.
+ * Communicates with the user and remote {@link IValueManager}s to set or print the value.
+ *
+ * Authors: Samuel Mayor, Alexandra Korukova
+ */
 public class Site {
     private static final Logger LOG = Logger.getLogger(Site.class.getName());
 
     private IValueManager valueManager;
 
     /**
-     * args[0] - {@link ValueManager}'s id
      * @param args
+     *  - args[0] - associated {@link ValueManager}'s port
      * @throws RemoteException
      * @throws NotBoundException
      */
@@ -24,29 +31,11 @@ public class Site {
         Site site = new Site(port);
     }
 
-    public void printValue() throws RemoteException {
-        int value = valueManager.getValue();
-        System.out.println(value);
-
-    }
-
-    public void setValue() throws RemoteException {
-        Scanner scanner = new Scanner(System.in);
-        String str;
-        int value;
-        while (true) {
-            System.out.println("Enter the value to set:");
-            str = scanner.next();
-            if(str.matches("-?\\d+"))   {
-                value = Integer.valueOf(str);
-                break;
-            }
-            System.out.println("The value must be an integer");
-        }
-        valueManager.setValue(value);
-    }
-
-    public void askUserForCommands() throws RemoteException {
+    /**
+     * Prints the menu and executes the tasks demanded by the user
+     * @throws RemoteException
+     */
+    public void userCommands() throws RemoteException {
         boolean run = true;
         boolean serversLinked = false;
         while (run) {
@@ -98,6 +87,10 @@ public class Site {
         }
     }
 
+    /**
+     * Constructor
+     * @param port the associated remote {@link IValueManager}'s port
+     */
     public Site(int port) {
 //        if(System.getSecurityManager() == null) {
 //            System.setSecurityManager(new SecurityManager());
@@ -107,7 +100,7 @@ public class Site {
             valueManager = (IValueManager) Naming.lookup("rmi://" + Constants.SERVER_HOST + ":" +
                     port + "/" + Constants.REMOTE_OBJ_NAME);
             LOG.log(Level.INFO, () -> Constants.REMOTE_OBJ_NAME + " is found on port " + port);
-            askUserForCommands();
+            userCommands();
         } catch (RemoteException | NotBoundException | MalformedURLException e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
         }
