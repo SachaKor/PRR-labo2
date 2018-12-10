@@ -43,11 +43,4 @@ public interface IValueManager extends Remote {
      * @throws RemoteException
      */
     void acceptMessage(Message message) throws RemoteException;
-
-    /**
-     * Updates the value stored
-     * @param newValue the new value to set
-     * @throws RemoteException
-     */
-    void updateValue(int newValue) throws RemoteException;
 }
