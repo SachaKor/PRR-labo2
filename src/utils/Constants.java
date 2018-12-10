@@ -1,3 +1,5 @@
+package utils;
+
 /**
  * This class contains useful constants
  *

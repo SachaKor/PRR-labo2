@@ -1,3 +1,8 @@
+package client;
+
+import lamport.IValueManager;
+import utils.Constants;
+
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -11,7 +16,17 @@ import java.util.logging.Logger;
 
 /**
  * This class represents the client side of the application.
- * Communicates with the user and remote {@link IValueManager}s to set or print the value.
+ * Communicates with the user and remote {@link IValueManager} to set or print the value.
+ *
+ * DESCRIPTION:
+ * - Every {@link Site} class has an {@link IValueManager} attributed to it and identified by the port on which
+ * the manager is listening. Ports must be passed as main program arguments to every {@link Site}.
+ * - When the {@link Site} is launched, it connects to the {@link lamport.ValueManager} attributed to it and displays the
+ * menu containing commands to be executed by the system (such as print or modify the value).
+ * REQUIREMENTS:
+ * - All the {@link IValueManager}s have to be launched before the {@link Site}s
+ * - The linking of the {@link IValueManager}s has to be requested by the user before printing or modifying the value
+ * (use "l" command)
  *
  * Authors: Samuel Mayor, Alexandra Korukova
  */
@@ -22,13 +37,13 @@ public class Site {
 
     /**
      * @param args
-     *  - args[0] - associated {@link ValueManager}'s port
+     *  - args[0] - associated {@link lamport.ValueManager}'s port
      * @throws RemoteException
      * @throws NotBoundException
      */
     public static void main(String ...args) throws RemoteException, NotBoundException {
         int port = Integer.parseInt(args[0]);
-        Site site = new Site(port);
+        new Site(port);
     }
 
     /**
@@ -75,6 +90,7 @@ public class Site {
                         LOG.log(Level.SEVERE, e.getMessage(), e);
                     }
                     serversLinked = true;
+                    LOG.log(Level.INFO, "Value managers linked");
                     break;
                 }
                 case Constants.QUIT: {
@@ -92,9 +108,6 @@ public class Site {
      * @param port the associated remote {@link IValueManager}'s port
      */
     public Site(int port) {
-//        if(System.getSecurityManager() == null) {
-//            System.setSecurityManager(new SecurityManager());
-//        }
         try {
             Registry registry = LocateRegistry.getRegistry(Constants.SERVER_HOST);
             valueManager = (IValueManager) Naming.lookup("rmi://" + Constants.SERVER_HOST + ":" +

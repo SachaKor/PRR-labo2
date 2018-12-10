@@ -1,3 +1,5 @@
+package lamport;
+
 import java.io.Serializable;
 
 /**

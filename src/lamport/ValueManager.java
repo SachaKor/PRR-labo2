@@ -1,3 +1,7 @@
+package lamport;
+
+import utils.Constants;
+
 import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
@@ -11,7 +15,28 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * This class defines a remote object implementation.
+ * This class defines a remote object of the {@link IValueManager} implementation.
+ *
+ * DESCRIPTION:
+ * When the {@link ValueManager} is launched, arguments of the main program are parsed first.
+ * The first argument argument (args[0]) is the port on which the current {@link ValueManager} is listening on.
+ * The second parameter (args[1]) is the number N of the nodes of the system.
+ * The next N-1 arguments are the ports on which the other {@link ValueManager}s are listening on.
+ * Every {@link ValueManager} must know the other nodes' ports to execute the mutual exclusion Lamport algorithm
+ * when several nodes send the value modification requests.
+ *
+ * LAMPORT:
+ * - When the client demands the modification of the value stored in the {@link IValueManager} attributed to him,
+ * the {@link ValueManager} first pushes the request to the request queue and informs all other nodes of this request,
+ * so that they also store it in their proper request queues.
+ * - When a {@link ValueManager} recieves such a modification request, it responds to the emitter with an
+ * acknowledgement message.
+ * - Once the {@link ValueManager} collects N-1 acknowledgements, it checks if it is able to get the critical section
+ * and change the value. It is the case when it's request is the oldest one in the request queue. If it is not,
+ * {@link ValueManager} continues waiting for it's turn.
+ * - When the value is modified by the {@link ValueManager}, the critical section is liberated and the the liberation
+ * messages are diffused to other nodes of the system. Once this message is received by a node, it also checks if it
+ * it's turn to get the critical section.
  *
  * Authors: Samuel Mayor, Alexandra Korukova
  */
@@ -162,17 +187,13 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
 
     /**
      * args[0] - the port on which the registry accepts the requests
-     * args[1] - the name of the remote object
-     * args[2] - number of the nodes of the system
+     * args[1] - number of the nodes of the system - N
+     * args[2]..args[N-1] - ports of the other {@link ValueManager}s of the system
      * @param args
      * @throws RemoteException
      * @throws AlreadyBoundException
      */
     public static void main(String ...args) throws RemoteException, AlreadyBoundException {
-        // create and install the security manager
-//        if(System.getSecurityManager() == null) {
-//            System.setSecurityManager(new SecurityManager());
-//        }
 
         // parse the main arguments
         int port = Integer.parseInt(args[0]);
