@@ -246,13 +246,19 @@ public class ValueManager extends UnicastRemoteObject implements IValueManager {
      */
     private void checkCriticalSection() throws RemoteException {
         if(criticalSectionRequested && nbAcks == nbNodes-1) {
-            // check if the local request is the oldest one
             int localRequestTime = pendingRequests.get(port).getTimestamp();
             for (Map.Entry<Integer, Message> entry : pendingRequests.entrySet()) {
-                if (localRequestTime > entry.getValue().getTimestamp()) {
+                // check if the local request is the oldest one
+                boolean localTimeGreater = localRequestTime > entry.getValue().getTimestamp();
+                // if there are more than one request with the same timestamps, the one with the smaller id (port) will
+                // get the access to the critical section
+                boolean localTimeEqualsIdGreater = (localRequestTime == entry.getValue().getTimestamp())
+                        && (port > entry.getValue().getEmitterPort());
+                if (localTimeGreater || localTimeEqualsIdGreater) {
                     return;
                 }
             }
+            // the current ValueManager's requests gets the access to the critical section
             // the local request is the oldest one
             LOG.log(Level.INFO, "Entering in the critical section");
             this.value = newValue;
